@@ -100,7 +100,7 @@ function App() {
     return (
         <Theme>
             <CssBaseline />
-            <Box sx={{ display: "flex", maxWidth: "1100px" }}>
+            <Box sx={{ display: "flex", maxWidth: "1100px", minWidth: "350px" }}>
                 <Header
                     onMobileMenuOpen={handleMobileOpen}
                     currentInterlocutorId={selectedInterlocutorId}

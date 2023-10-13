@@ -10,6 +10,7 @@ interface DirectionProps {
 
 const MessageBubble = styled.div`
     width: 55%;
+    min-width: 300px;
     padding: 0.7em;
     border-radius: 15px;
     background: ${({ direction }: DirectionProps) => (direction === MessageDirection.INBOUND ? "#2d2d2f" : "#1d75fe")};
@@ -23,6 +24,8 @@ const MessageBubble = styled.div`
     > p {
         flex: 1 1 auto;
         font-weight: 400;
+        max-width: 100%;
+        overflow: hidden;
     }
 `;
 
