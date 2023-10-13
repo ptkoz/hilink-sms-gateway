@@ -2,6 +2,9 @@ import { Conversation } from "../types.ts";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import DialogTransition from "./DialogTransition.tsx";
 
+/**
+ * A conformation dialog shown before deleting the whole conversation.
+ */
 function DeleteConversationDialog(props: {
     open: boolean;
     onDeleteCancel: () => void;

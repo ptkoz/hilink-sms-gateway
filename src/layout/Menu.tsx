@@ -17,7 +17,7 @@ import { Conversation } from "../types.ts";
 export interface MenuProps {
     conversations: Conversation[];
     selectedInterlocutorId: string | null;
-    isMobileOpen: boolean;
+    isMobileOpen: boolean; // whether mobile menu is open or not
 
     onConversationCreate(): void;
 
@@ -26,6 +26,9 @@ export interface MenuProps {
     onSelectInterlocutor(id: string): void;
 }
 
+/**
+ * Displays interactive & responsive conversation menu.
+ */
 function Menu({
     conversations,
     selectedInterlocutorId,

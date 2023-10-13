@@ -8,6 +8,9 @@ export interface HeaderProps {
     onDeleteConversation: () => void;
 }
 
+/**
+ * The application header
+ */
 function Header({ currentInterlocutorId, onMobileMenuOpen, onDeleteConversation }: HeaderProps) {
     return (
         <AppBar

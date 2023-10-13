@@ -2,7 +2,7 @@ import { parsePhoneNumber } from "awesome-phonenumber";
 import { Interlocutor } from "../types.ts";
 
 /**
- * Creates interlocutor object out of Phone Number
+ * Creates interlocutor object out of phone number
  */
 export function parseInterlocutor(phone: string): Interlocutor {
     const parsedPhone = parsePhoneNumber(phone, { regionCode: "PL" });

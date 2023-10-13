@@ -1,5 +1,4 @@
 import Theme from "./layout/Theme.tsx";
-import { deleteConversation, sendMessage, startConversationPolling } from "./api_dsfsdf.ts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, CssBaseline } from "@mui/material";
 import { Conversation, Message, MessageDirection } from "./types.ts";
@@ -7,8 +6,11 @@ import Menu from "./layout/Menu.tsx";
 import Header from "./layout/Header.tsx";
 import ConversationContent from "./layout/ConversationContent.tsx";
 import DeleteConversationDialog from "./layout/DeleteConversationDialog.tsx";
-import { parseInterlocutor } from "./api/parseInterlocutor.ts";
 import NewConversationDialog from "./layout/NewConversationDialog.tsx";
+import { parseInterlocutor } from "./api/parseInterlocutor.ts";
+import { sendMessage } from "./api/sendMessage.ts";
+import { deleteConversation } from "./api/deleteConversation.ts";
+import { startConversationPolling } from "./api/startConversationPolling.ts";
 
 function App() {
     const conversationEndRef = useRef<HTMLDivElement>(null);

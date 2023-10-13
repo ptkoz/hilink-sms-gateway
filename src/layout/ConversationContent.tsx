@@ -11,6 +11,9 @@ export interface ConversationContentProps {
     onSend(phoneNumber: string, msg: string): boolean;
 }
 
+/**
+ * A component displaying sent & received messages in a form of a chat.
+ */
 function ConversationContent({ conversation, onSend, conversationEndRef }: ConversationContentProps) {
     return (
         <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - 350px)` } }}>
