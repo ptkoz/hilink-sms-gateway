@@ -1,32 +1,39 @@
-import { Message, MessageDirection } from "./api.ts";
 import styled from "@emotion/styled";
 import { CircularProgress, Typography } from "@mui/material";
 import { format, formatDistance } from "date-fns";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Message, MessageDirection } from "../types.ts";
 
 interface DirectionProps {
     direction: MessageDirection;
 }
 
 const MessageBubble = styled.div`
-    width: 49%;
-    padding: 0.7em 0.7em 1.5em;
+    width: 55%;
+    padding: 0.7em;
     border-radius: 15px;
     background: ${({ direction }: DirectionProps) => (direction === MessageDirection.INBOUND ? "#2d2d2f" : "#1d75fe")};
     margin-left: ${({ direction }: DirectionProps) => (direction === MessageDirection.INBOUND ? "0" : "auto")};
     margin-bottom: 1em;
     white-space: pre-wrap;
-    position: relative;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: flex-end;
+
+    > p {
+        flex: 1 1 auto;
+        font-weight: 400;
+    }
 `;
 
 const TimestampText = styled.div`
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    padding: 0 15px 0.3em;
     font-size: 0.8em;
     font-weight: 100;
     cursor: pointer;
+    flex: 0 0 auto;
+    align-self: flex-end;
+    justify-self: flex-end;
+    text-align: right;
 `;
 
 function MessageView({ content, timestamp, direction, pending }: Message) {
@@ -37,14 +44,31 @@ function MessageView({ content, timestamp, direction, pending }: Message) {
             <MessageBubble direction={direction}>
                 <Typography>{content}</Typography>
                 <TimestampText title={format(timestamp, "PPp")} onClick={() => setShowRelativeDate(!showRelativeDate)}>
-                    {pending && <CircularProgress size={"0.8em"} sx={{ mr: "0.5em"}} />}
-                    {showRelativeDate
-                        ? formatDistance(timestamp, new Date(), { addSuffix: true })
-                        : format(timestamp, "PPp")}
+                    {pending && <CircularProgress size={"0.8em"} sx={{ mr: "0.5em" }} />}
+                    {showRelativeDate ? <Distance date={timestamp} /> : format(timestamp, "PPp")}
                 </TimestampText>
             </MessageBubble>
         </div>
     );
+}
+
+function Distance({ date }: { date: Date }) {
+    const [value, setValue] = useState(() => formatDistance(date, new Date(), { addSuffix: true }));
+
+    useEffect(() => {
+        const interval = setInterval(
+            () => {
+                setValue(formatDistance(date, new Date(), { addSuffix: true }));
+            },
+            60000, // every minute
+        );
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [date]);
+
+    return <>{value}</>;
 }
 
 export default MessageView;

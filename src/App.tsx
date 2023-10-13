@@ -1,129 +1,134 @@
-import Theme from "./Theme.tsx";
-import { Conversation, deleteConversation, MessageDirection, sendMessage, startConversationPolling } from "./api.ts";
-import { useEffect, useRef, useState } from "react";
-import {
-    AppBar,
-    Box,
-    Button,
-    CssBaseline,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    IconButton,
-    Toolbar,
-    Typography,
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import DeleteIcon from "@mui/icons-material/Delete";
-import Menu from "./Menu.tsx";
-import MessageView from "./MessageView.tsx";
-import OutboundInput from "./OutboundInput.tsx";
+import Theme from "./layout/Theme.tsx";
+import { deleteConversation, sendMessage, startConversationPolling } from "./api_dsfsdf.ts";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, CssBaseline } from "@mui/material";
+import { Conversation, Message, MessageDirection } from "./types.ts";
+import Menu from "./layout/Menu.tsx";
+import Header from "./layout/Header.tsx";
+import ConversationContent from "./layout/ConversationContent.tsx";
+import DeleteConversationDialog from "./layout/DeleteConversationDialog.tsx";
+import { parseInterlocutor } from "./api/parseInterlocutor.ts";
+import NewConversationDialog from "./layout/NewConversationDialog.tsx";
 
 function App() {
     const conversationEndRef = useRef<HTMLDivElement>(null);
-    const [selected, setSelected] = useState("");
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [selectedInterlocutorId, setSelectedInterlocutorId] = useState<null | string>(null);
     const [isMobileOpen, setMobileOpen] = useState(false);
     const [isDeleteOpen, setDeleteOpen] = useState(false);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [isCreateOpen, setCreateOpen] = useState(false);
+
+    const currentConversation = conversations.find((c) => c.interlocutor.id === selectedInterlocutorId);
 
     useEffect(() => {
         return startConversationPolling(setConversations);
     }, []);
 
     useEffect(() => {
-        if (selected === "" && conversations.length > 0) {
-            setSelected(conversations[0].interlocutorId);
+        if (selectedInterlocutorId === null && conversations.length > 0) {
+            setSelectedInterlocutorId(conversations[0].interlocutor.id);
         }
 
         conversationEndRef.current?.scrollIntoView();
-    }, [conversations, selected]);
+    }, [conversations, selectedInterlocutorId]);
 
-    const handleSend = (phoneNumber: string, msg: string) => {
-        sendMessage(phoneNumber, msg).catch((e) => console.error(e));
+    const handleSend = useCallback(
+        (phone: string, msg: string) => {
+            const interlocutor = parseInterlocutor(phone);
+            if (!interlocutor.phoneNumber) {
+                return false;
+            }
 
-        const newConversations = conversations.slice();
-        const index = newConversations.findIndex((c) => c.phoneNumber === phoneNumber);
-        newConversations[index]?.messages.push({
-            direction: MessageDirection.OUTBOUND,
-            interlocutorId: phoneNumber,
-            content: msg,
-            timestamp: new Date(),
-            pending: true,
-        });
-        setConversations(newConversations);
-    };
+            sendMessage(interlocutor.phoneNumber, msg).catch((e) => console.error(e));
 
-    const current = conversations.find((c) => c.interlocutorId === selected);
+            const sentMessage: Message = {
+                direction: MessageDirection.OUTBOUND,
+                interlocutor,
+                content: msg,
+                timestamp: new Date(),
+                pending: true,
+            };
 
-    const handleDelete = () => {
-        if (current) {
-            deleteConversation(current).catch((e) => console.error(e));
-            setConversations(conversations.filter(c => c.interlocutorId !== current.interlocutorId));
+            const newConversations = conversations.slice();
+            const index = newConversations.findIndex((c) => c.interlocutor.id === interlocutor.id);
+            if (index !== -1) {
+                newConversations[index]?.messages.push(sentMessage);
+            } else {
+                newConversations.unshift({
+                    interlocutor,
+                    lastMessageTimestamp: sentMessage.timestamp,
+                    messages: [sentMessage],
+                });
+            }
+
+            setConversations(newConversations);
+            setSelectedInterlocutorId(interlocutor.id);
+            return true;
+        },
+        [conversations],
+    );
+
+    const handleDeleteConfirm = useCallback(() => {
+        if (currentConversation) {
+            deleteConversation(currentConversation).catch((e) => console.error(e));
+
+            const currentIndex = conversations.findIndex(
+                (c) => c.interlocutor.id === currentConversation.interlocutor.id,
+            );
+            if (currentIndex > 0) {
+                setSelectedInterlocutorId(conversations[currentIndex - 1].interlocutor.id);
+            } else if (currentIndex < conversations.length - 1) {
+                setSelectedInterlocutorId(conversations[currentIndex + 1].interlocutor.id);
+            } else {
+                setSelectedInterlocutorId(null);
+            }
+
+            setConversations(conversations.filter((c) => c.interlocutor.id !== currentConversation.interlocutor.id));
         }
         setDeleteOpen(false);
-    };
+    }, [currentConversation, conversations]);
+
+    const handleDeleteCancel = useCallback(() => setDeleteOpen(false), []);
+    const handleDeleteOpen = useCallback(() => setDeleteOpen(true), []);
+    const handleMobileOpen = useCallback(() => setMobileOpen(true), []);
+    const handleMobileClose = useCallback(() => setMobileOpen(false), []);
+    const handleCreateOpen = useCallback(() => setCreateOpen(true), []);
+    const handleCreateClose = useCallback(() => setCreateOpen(false), []);
 
     return (
         <Theme>
-            <Box sx={{ display: "flex", maxWidth: "1300px" }}>
-                <CssBaseline />
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        width: { md: `calc(100% - 350px)` },
-                        ml: { md: `350px` },
-                    }}
-                >
-                    <Toolbar>
-                        <IconButton
-                            color="inherit"
-                            edge="start"
-                            onClick={() => setMobileOpen(!isMobileOpen)}
-                            sx={{ mr: 2, display: { md: "none" } }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography variant="h6" noWrap component="div">
-                            {selected}
-                        </Typography>
-                        {current && (
-                            <IconButton color="inherit" edge="end" onClick={() => setDeleteOpen(true)}>
-                                <DeleteIcon />
-                            </IconButton>
-                        )}
-                    </Toolbar>
-                </AppBar>
+            <CssBaseline />
+            <Box sx={{ display: "flex", maxWidth: "1100px" }}>
+                <Header
+                    onMobileMenuOpen={handleMobileOpen}
+                    currentInterlocutorId={selectedInterlocutorId}
+                    onDeleteConversation={handleDeleteOpen}
+                />
                 <Menu
                     isMobileOpen={isMobileOpen}
-                    onClose={() => setMobileOpen(false)}
-                    selected={selected}
-                    onSelect={setSelected}
+                    onMobileClose={handleMobileClose}
+                    selectedInterlocutorId={selectedInterlocutorId}
+                    onSelectInterlocutor={setSelectedInterlocutorId}
                     conversations={conversations}
+                    onConversationCreate={handleCreateOpen}
                 />
-                <Box component="main" sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - 350px)` } }}>
-                    <Toolbar />
-                    {current?.messages.map((msg, key) => <MessageView {...msg} key={key} />)}
-                    <div ref={conversationEndRef} />
-                    <Toolbar />
-                    {current?.phoneNumber && <OutboundInput onSend={handleSend} phoneNumber={current.phoneNumber} />}
-                </Box>
+                {currentConversation && (
+                    <ConversationContent
+                        conversation={currentConversation}
+                        conversationEndRef={conversationEndRef}
+                        onSend={handleSend}
+                    />
+                )}
             </Box>
-            <Dialog open={isDeleteOpen} onClose={() => setDeleteOpen(false)}>
-                <DialogTitle>{`Usunąć całą konwersację z ${current?.interlocutorId}?`}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Czy na pewno chcesz usunąć wszystkie wiadomości w tej konwersacji?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDeleteOpen(false)}>Nie</Button>
-                    <Button onClick={handleDelete} autoFocus>
-                        Tak
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <NewConversationDialog open={isCreateOpen} onClose={handleCreateClose} onSend={handleSend} />
+            {currentConversation && (
+                <DeleteConversationDialog
+                    open={isDeleteOpen}
+                    onDeleteCancel={handleDeleteCancel}
+                    conversationToDelete={currentConversation}
+                    onDeleteConfirm={handleDeleteConfirm}
+                />
+            )}
         </Theme>
     );
 }

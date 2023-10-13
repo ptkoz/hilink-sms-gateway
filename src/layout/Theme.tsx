@@ -7,9 +7,9 @@ const darkTheme = createTheme({
     },
     typography: {
         fontWeightLight: "100",
-        fontWeightMedium: "100",
-        fontWeightRegular: "300",
-        fontWeightBold: "500",
+        fontWeightMedium: "300",
+        fontWeightRegular: "500",
+        fontWeightBold: "900",
     }
 });
 
