@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { CircularProgress, Typography } from "@mui/material";
-import { format, formatDistance } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { Message, MessageDirection } from "../types.ts";
 
@@ -56,22 +56,15 @@ function MessageView({ content, timestamp, direction, pending }: Message) {
 }
 
 function Distance({ date }: { date: Date }) {
-    const [value, setValue] = useState(() => formatDistance(date, new Date(), { addSuffix: true }));
+    const [counter, setValue] = useState(0);
 
     useEffect(() => {
-        const interval = setInterval(
-            () => {
-                setValue(formatDistance(date, new Date(), { addSuffix: true }));
-            },
-            60000, // every minute
-        );
+        // change state every minute to force re-render
+        const timeout = setTimeout(() => setValue(counter + 1), 60000);
+        return () => clearTimeout(timeout);
+    });
 
-        return () => {
-            clearInterval(interval);
-        };
-    }, [date]);
-
-    return <>{value}</>;
+    return <>{formatDistanceToNow(date, { addSuffix: true })}</>;
 }
 
 export default MessageView;
